@@ -14,42 +14,42 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "resg_imp_infra_terraform_mysql" {
-    name     = "resg_imp_infra_terraform_mysql"
+resource "azurerm_resource_group" "resgpmysqltest007" {
+    name     = "resgpmysqltest007"
     location = "eastus"
 
     tags     = {
-        "Environment" = "trabalho eng soft infra"
+        "Environment" = "aula teste"
     }
 }
 
-resource "azurerm_virtual_network" "vnet_mysql" {
-    name                = "vnet_mysql"
+resource "azurerm_virtual_network" "virtualnetmysql" {
+    name                = "virtualnetmysql"
     address_space       = ["10.0.0.0/16"]
     location            = "eastus"
-    resource_group_name = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
+    resource_group_name = azurerm_resource_group.resgpmysqltest007.name
 
-    depends_on = [azurerm_resource_group.resg_imp_infra_terraform_mysql]
+    depends_on = [ azurerm_resource_group.resgpmysqltest007 ]
 }
 
-resource "azurerm_subnet" "snet_mysql" {
-    name                 = "snet_mysql"
-    resource_group_name  = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
-    virtual_network_name = azurerm_virtual_network.vnet_mysql.name
+resource "azurerm_subnet" "snmysqltest" {
+    name                 = "snmysqltest"
+    resource_group_name  = azurerm_resource_group.resgpmysqltest007.name
+    virtual_network_name = azurerm_virtual_network.virtualnetmysql.name
     address_prefixes       = ["10.0.1.0/24"]
 }
 
-resource "azurerm_public_ip" "public_ip_mysql" {
-    name                         = "public_ip_mysql"
+resource "azurerm_public_ip" "publicipmysql01" {
+    name                         = "publicipmysql01"
     location                     = "eastus"
-    resource_group_name          = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
+    resource_group_name          = azurerm_resource_group.resgpmysqltest007.name
     allocation_method            = "Static"
 }
 
-resource "azurerm_network_security_group" "sec_group_mysql" {
-    name                = "sec_group_mysql"
+resource "azurerm_network_security_group" "netsecgroupmysql01" {
+    name                = "netsecgroupmysql01"
     location            = "eastus"
-    resource_group_name = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
+    resource_group_name = azurerm_resource_group.resgpmysqltest007.name
 
     security_rule {
         name                       = "mysql"
@@ -76,51 +76,51 @@ resource "azurerm_network_security_group" "sec_group_mysql" {
     }
 }
 
-resource "azurerm_network_interface" "network_interface_mysql" {
-    name                      = "network_interface_mysql"
+resource "azurerm_network_interface" "networkinterfacemysql01" {
+    name                      = "networkinterfacemysql01"
     location                  = "eastus"
-    resource_group_name       = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
+    resource_group_name       = azurerm_resource_group.resgpmysqltest007.name
 
     ip_configuration {
         name                          = "myNicConfiguration"
-        subnet_id                     = azurerm_subnet.snet_mysql.id
+        subnet_id                     = azurerm_subnet.snmysqltest.id
         private_ip_address_allocation = "Dynamic"
-        public_ip_address_id          = azurerm_public_ip.public_ip_mysql.id
+        public_ip_address_id          = azurerm_public_ip.publicipmysql01.id
     }
 }
 
 resource "azurerm_network_interface_security_group_association" "netintersecgroupassoc01" {
-    network_interface_id      = azurerm_network_interface.network_interface_mysql.id
-    network_security_group_id = azurerm_network_security_group.sec_group_mysql.id
+    network_interface_id      = azurerm_network_interface.networkinterfacemysql01.id
+    network_security_group_id = azurerm_network_security_group.netsecgroupmysql01.id
 }
 
-data "azurerm_public_ip" "mysql_public_ip" {
-  name                = azurerm_public_ip.public_ip_mysql.name
-  resource_group_name = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
+data "azurerm_public_ip" "ip_aula_data_db" {
+  name                = azurerm_public_ip.publicipmysql01.name
+  resource_group_name = azurerm_resource_group.resgpmysqltest007.name
 }
 
 resource "azurerm_storage_account" "storage_account_mysql" {
-    name                        = "storage_account_mysql"
-    resource_group_name         = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
+    name                        = "storageaccountmysql"
+    resource_group_name         = azurerm_resource_group.resgpmysqltest007.name
     location                    = "eastus"
     account_tier                = "Standard"
     account_replication_type    = "LRS"
 }
 
 
-resource "azurerm_mysql_server" "mysql_server" {
-    name                = "mysql_server"
+resource "azurerm_mysql_server" "mysqlservertest007" {
+    name                = "mysqlservertest007"
     location            = "eastus"
-    resource_group_name = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
+    resource_group_name = azurerm_resource_group.resgpmysqltest007.name
 
-    administrator_login          = "root"
-    administrator_login_password = "c6SyXHL2XW9E2ygB"
+    administrator_login          = "mysqladminun"
+    administrator_login_password = "H@Sh1CoR3!"
 
     sku_name   = "B_Gen5_2"
     storage_mb = 5120
     version    = "5.7"
 
-    auto_grow_enabled                 = false
+    auto_grow_enabled                 = true
     backup_retention_days             = 7
     geo_redundant_backup_enabled      = false
     infrastructure_encryption_enabled = false
@@ -129,19 +129,19 @@ resource "azurerm_mysql_server" "mysql_server" {
     ssl_minimal_tls_version_enforced  = "TLS1_2"
 }
 
-resource "azurerm_mysql_database" "mysql_database" {
-    name                = "mysql_database"
-    resource_group_name = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
-    server_name         = azurerm_mysql_server.mysql_server.name
+resource "azurerm_mysql_database" "mbadbmysql" {
+    name                = "mbadbmysql"
+    resource_group_name = azurerm_resource_group.resgpmysqltest007.name
+    server_name         = azurerm_mysql_server.mysqlservertest007.name
     charset             = "utf8"
     collation           = "utf8_unicode_ci"
 }
 
-resource "azurerm_linux_virtual_machine" "mysql_vm" {
-    name                  = "mysql_vm"
+resource "azurerm_linux_virtual_machine" "vm_mysql" {
+    name                  = "vm_mysql"
     location              = "eastus"
-    resource_group_name   = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
-    network_interface_ids = [azurerm_network_interface.network_interface_mysql.id]
+    resource_group_name   = azurerm_resource_group.resgpmysqltest007.name
+    network_interface_ids = [azurerm_network_interface.networkinterfacemysql01.id]
     size                  = "Standard_DS1_v2"
 
     os_disk {
@@ -166,23 +166,23 @@ resource "azurerm_linux_virtual_machine" "mysql_vm" {
         storage_account_uri = azurerm_storage_account.storage_account_mysql.primary_blob_endpoint
     }
 
-    depends_on = [azurerm_resource_group.resg_imp_infra_terraform_mysql]
+    depends_on = [ azurerm_resource_group.resgpmysqltest007 ]
 }
 
 output "public_ip_address_mysql" {
-    value = azurerm_public_ip.public_ip_mysql.ip_address
+    value = azurerm_public_ip.publicipmysql01.ip_address
 }
 
-resource "azurerm_mysql_firewall_rule" "mysql_firewall" {
-    name                = "mysql_firewall"
-    resource_group_name = azurerm_resource_group.resg_imp_infra_terraform_mysql.name
-    server_name         = azurerm_mysql_server.mysql_server.name
+resource "azurerm_mysql_firewall_rule" "mysql-fw-rule" {
+    name                = "mysql-fw-rule"
+    resource_group_name = azurerm_resource_group.resgpmysqltest007.name
+    server_name         = azurerm_mysql_server.mysqlservertest007.name
     start_ip_address    = "0.0.0.0"
     end_ip_address      = "0.0.0.0"
 }
 
 resource "time_sleep" "wait_30_seconds_db" {
-  depends_on = [azurerm_linux_virtual_machine.mysql_vm]
+  depends_on = [azurerm_linux_virtual_machine.vm_mysql]
   create_duration = "30s"
 }
 
@@ -192,13 +192,13 @@ resource "null_resource" "upload_db" {
             type = "ssh"
             user = var.user
             password = var.password
-            host = data.azurerm_public_ip.mysql_public_ip.ip_address
+            host = data.azurerm_public_ip.ip_aula_data_db.ip_address
         }
         source = "mysql"
         destination = "/home/azureuser"
     }
 
-    depends_on = [time_sleep.wait_30_seconds_db]
+    depends_on = [ time_sleep.wait_30_seconds_db ]
 }
 
 resource "null_resource" "deploy_db" {
@@ -210,7 +210,7 @@ resource "null_resource" "deploy_db" {
             type = "ssh"
             user = var.user
             password = var.password
-            host = data.azurerm_public_ip.mysql_public_ip.ip_address
+            host = data.azurerm_public_ip.ip_aula_data_db.ip_address
         }
         inline = [
             "sudo apt-get update",
